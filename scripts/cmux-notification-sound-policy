@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""cmux notification hook that keeps visual alerts but deduplicates sounds."""
+
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+
+DEFAULT_WINDOW_SECONDS = 20
+MAX_STATE_AGE_SECONDS = 24 * 60 * 60
+
+
+def read_window_seconds() -> int:
+    raw = os.environ.get("CMUX_SOUND_DEDUPE_WINDOW", str(DEFAULT_WINDOW_SECONDS))
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return DEFAULT_WINDOW_SECONDS
+
+
+def state_path() -> Path:
+    raw = os.environ.get(
+        "CMUX_SOUND_DEDUPE_STATE",
+        "~/.cache/cmux/notification-sound-policy.json",
+    )
+    return Path(raw).expanduser()
+
+
+def load_state(path: Path, now: float) -> dict[str, float]:
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+    if not isinstance(data, dict):
+        return {}
+
+    state: dict[str, float] = {}
+    for key, value in data.items():
+        if not isinstance(key, str):
+            continue
+        try:
+            timestamp = float(value)
+        except (TypeError, ValueError):
+            continue
+        if now - timestamp <= MAX_STATE_AGE_SECONDS:
+            state[key] = timestamp
+    return state
+
+
+def save_state(path: Path, state: dict[str, float]) -> None:
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")
+    except OSError:
+        pass
+
+
+def notification_key(payload: dict) -> str:
+    notification = payload.get("notification")
+    if not isinstance(notification, dict):
+        notification = {}
+
+    parts = [
+        notification.get("workspaceId"),
+        notification.get("surfaceId"),
+        notification.get("title"),
+        notification.get("subtitle"),
+    ]
+    key = "|".join(str(part) for part in parts if part)
+    return key or "global"
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        sys.stdout.write(raw)
+        return 0
+
+    if not isinstance(payload, dict):
+        sys.stdout.write(raw)
+        return 0
+
+    effects = payload.get("effects")
+    if not isinstance(effects, dict):
+        effects = {}
+        payload["effects"] = effects
+
+    if effects.get("sound") is False:
+        print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        return 0
+
+    context = payload.get("context")
+    if not isinstance(context, dict):
+        context = {}
+
+    if context.get("appFocused") and context.get("focusedPanel"):
+        effects["sound"] = False
+        print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+        return 0
+
+    now = time.time()
+    window_seconds = read_window_seconds()
+    path = state_path()
+    state = load_state(path, now)
+    key = notification_key(payload)
+    last_sound_at = state.get(key)
+
+    if last_sound_at is not None and now - last_sound_at < window_seconds:
+        effects["sound"] = False
+    else:
+        state[key] = now
+        save_state(path, state)
+
+    print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

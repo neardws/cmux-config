@@ -6,6 +6,7 @@ Personal cmux configuration for macOS.
 
 - `cmux/cmux.json` - cmux app settings, using JSONC.
 - `ghostty/config` - Ghostty terminal settings used by cmux for terminal appearance and behavior.
+- `scripts/cmux-notification-sound-policy` - notification hook that keeps visual alerts but deduplicates repeated sounds.
 - `scripts/install.sh` - backs up existing local config files and links this repo into the expected locations.
 
 ## Install
@@ -52,6 +53,31 @@ Good candidates to version here:
 - Notifications: badge, sound, pane flash, menu bar behavior, notification command, and notification hooks when they are portable.
 - Automation defaults: socket access mode, agent integration toggles, subagent notification suppression, and workspace port allocation.
 - Workspace colors and sidebar appearance when they are personal preferences rather than project-specific state.
+
+## Current Workflow Choices
+
+This config is tuned for parallel agent work:
+
+- New workspaces open after the current workspace and inherit the working directory.
+- Forked conversations default to a right split.
+- Workspaces with new notifications can move toward the top.
+- Agent sessions automatically resume when cmux reopens.
+- Agent Hibernation is enabled with a conservative 30-minute idle window and up to 12 live restorable terminals.
+- Codex/Claude/Cursor/Gemini/Amp/Kiro integrations stay enabled, while nested subagent notifications are suppressed.
+- The sidebar shows working directory, PR metadata, git status, ports, SSH details, logs, progress, notification messages, and custom metadata.
+- Workspace colors use a muted custom palette with the active workspace shown as a left rail.
+
+Notifications use the built-in `Ping` sound plus `scripts/cmux-notification-sound-policy`. The hook keeps badges, unread rings, pane flash, and notification history, but disables repeated sounds from the same workspace/surface/title/subtitle within 20 seconds. Override the window with:
+
+```sh
+export CMUX_SOUND_DEDUPE_WINDOW=45
+```
+
+The install script links the hook to:
+
+```text
+~/.local/bin/cmux-notification-sound-policy
+```
 
 Use project-local config instead of this global repo for project behavior:
 

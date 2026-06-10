@@ -30,7 +30,7 @@ link_config() {
 
 link_config "$repo_dir/cmux/cmux.json" "$HOME/.config/cmux/cmux.json"
 link_config "$repo_dir/ghostty/config" "$HOME/.config/ghostty/config"
+link_config "$repo_dir/scripts/cmux-notification-sound-policy" "$HOME/.local/bin/cmux-notification-sound-policy"
 
 printf '\nRun this to apply changes without restarting cmux:\n'
 printf '  cmux reload-config\n'
-

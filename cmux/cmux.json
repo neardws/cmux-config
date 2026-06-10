@@ -8,6 +8,89 @@
   // cmux creates this template on launch when ~/.config/cmux/cmux.json is missing.
   // Legacy settings.json files are read only as fallback for keys not present here.
 
+  "app": {
+    "newWorkspacePlacement": "afterCurrent",
+    "forkConversationDefaultDestination": "right",
+    "workspaceInheritWorkingDirectory": true,
+    "reorderOnNotification": true,
+    "keepWorkspaceOpenWhenClosingLastSurface": true
+  },
+
+  "terminal": {
+    "autoResumeAgentSessions": true,
+    "agentHibernation": {
+      "enabled": true,
+      "idleSeconds": 1800,
+      "maxLiveTerminals": 12
+    },
+    "showScrollBar": true
+  },
+
+  "automation": {
+    "socketControlMode": "cmuxOnly",
+    "cursorIntegration": true,
+    "claudeCodeIntegration": true,
+    "geminiIntegration": true,
+    "ampIntegration": true,
+    "kiroIntegration": true,
+    "kiroNotificationLevel": "standard",
+    "portBase": 9100,
+    "portRange": 10,
+    "suppressSubagentNotifications": true
+  },
+
+  "sidebar": {
+    "showBranchDirectory": true,
+    "showPullRequests": true,
+    "watchGitStatus": true,
+    "makePullRequestsClickable": true,
+    "openPullRequestLinksInCmuxBrowser": true,
+    "showPorts": true,
+    "openPortLinksInCmuxBrowser": true,
+    "showSSH": true,
+    "showLog": true,
+    "stackBranchDirectory": true,
+    "branchLayout": "vertical",
+    "pathLastSegmentOnly": true,
+    "showProgress": true,
+    "showWorkspaceDescription": true,
+    "showNotificationMessage": true,
+    "showCustomMetadata": true
+  },
+
+  "notifications": {
+    "sound": "Ping",
+    "unreadPaneRing": true,
+    "paneFlash": true,
+    "dockBadge": true,
+    "showInMenuBar": true,
+    "hooksMode": "append",
+    "hooks": [
+      {
+        "id": "dedupe-agent-sound",
+        "command": "$HOME/.local/bin/cmux-notification-sound-policy",
+        "timeoutSeconds": 5
+      }
+    ]
+  },
+
+  "workspaceColors": {
+    "indicatorStyle": "leftRail",
+    "selectionColor": "#dbd7e0",
+    "notificationBadgeColor": "#ac9bc5",
+    "colors": {
+      "Blue": "#527b98",
+      "Gray": "#8c8792",
+      "Green": "#667e44",
+      "Magenta": "#806f9b",
+      "Orange": "#bf8240",
+      "Pink": "#e87da4",
+      "Red": "#c06159",
+      "Teal": "#468173",
+      "Yellow": "#b39119"
+    }
+  },
+
   // "app" : {
   //     "reorderOnNotification" : true,
   //     "confirmQuit" : "always",
