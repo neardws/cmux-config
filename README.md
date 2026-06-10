@@ -79,6 +79,49 @@ The install script links the hook to:
 ~/.local/bin/cmux-notification-sound-policy
 ```
 
+## Remote SSH And Session Restore
+
+Use `cmux ssh` instead of running plain `ssh` inside a terminal when the remote workspace should be visible to cmux:
+
+```sh
+cmux ssh devbox --name devbox --forward-agent
+```
+
+`cmux ssh` creates a cmux-managed remote workspace, marks it as SSH-backed, and starts a remote SSH session. It also provides a local SSH proxy endpoint so browser traffic can egress from the remote host. It does not automatically start `tmux`.
+
+For remote agent work, install hooks on the machine where the agent actually runs:
+
+```sh
+cmux ssh devbox
+cmux hooks setup codex
+cmux hooks setup claude
+```
+
+The hooks let cmux identify Codex/Claude sessions, record their session IDs, show running/idle/needs-input state, route notifications and Feed events, and resume agents with their native resume commands such as `codex resume <id>` or `claude --resume <id>`.
+
+There are two different restore layers:
+
+- SSH restore: `cmux ssh` manages the remote workspace, remote PTY session, reconnects, SSH details, remote ports, and browser proxying.
+- Agent restore: hooks record the agent's native session ID so cmux can resume the conversation instead of only restoring a shell.
+
+For cross-device continuity, keep the long-lived process on the remote host with `tmux`:
+
+```sh
+cmux ssh devbox -- tmux new -As agents
+```
+
+Run Codex/Claude inside that remote `tmux` session. Any Mac can then reconnect with the same command and attach to the same remote workspace state. If the agent process has exited, use the agent's own resume command from the remote host.
+
+Remote hook records live on the remote machine:
+
+```sh
+ls ~/.cmuxterm
+cat ~/.cmuxterm/codex-hook-sessions.json
+cat ~/.cmuxterm/claude-hook-sessions.json
+```
+
+`autoResumeAgentSessions` is useful when the same cmux client restores its saved layout. Across different Macs, do not rely on another Mac having the previous client's cmux layout. Use remote `tmux` for a still-running session, or use `codex resume` / `claude --resume` from the remote hook records for a stopped agent process.
+
 Use project-local config instead of this global repo for project behavior:
 
 - `.cmux/cmux.json` inside a project for project-specific actions, command palette entries, workspace layouts, and surface tab bar buttons.
